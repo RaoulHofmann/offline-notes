@@ -5,6 +5,7 @@ type SQLite3 = Awaited<ReturnType<typeof sqlite3InitModule>>;
 
 let sqlite3: SQLite3 | null = null;
 let db: any = null;
+let poolUtil: any = null;
 
 interface WorkerMessage {
   type: string;
@@ -24,8 +25,7 @@ function respond(msg: WorkerResponse) {
 
 async function handleInit() {
   sqlite3 = await sqlite3InitModule();
-  const opfsAvailable = sqlite3 !== null && "opfs" in sqlite3;
-  return { opfsAvailable };
+  return {};
 }
 
 async function handleOpen() {
@@ -35,35 +35,22 @@ async function handleOpen() {
     return { alreadyOpen: true };
   }
 
-  const opfsAvailable = "opfs" in sqlite3;
-  const opfsName = "lecturenote.sqlite";
+  const dbFileName = "/note.sqlite";
 
-  if (opfsAvailable) {
-    let exists = false;
-    try {
-      const testDb = new (sqlite3.oo1 as any).OpfsDb(opfsName, "r");
-      testDb.close();
-      exists = true;
-    } catch {
-      // Database doesn't exist yet
-    }
+  try {
+    poolUtil = await sqlite3.installOpfsSAHPoolVfs({
+      name: "opfs-sahpool",
+      directory: ".note",
+    });
 
-    if (exists) {
-      db = new (sqlite3.oo1 as any).OpfsDb(opfsName, "w");
-      return { persistent: true, needsInit: false };
-    }
-
-    try {
-      db = new (sqlite3.oo1 as any).OpfsDb(opfsName, "w");
-      return { persistent: true, needsInit: true };
-    } catch {
-      db = new sqlite3.oo1.DB(":memory:");
-      return { persistent: false, needsInit: true };
-    }
+    db = new poolUtil.OpfsSAHPoolDb(dbFileName);
+    return { persistent: true, needsInit: true };
+  } catch (err) {
+    console.error("OPFS SAHPool VFS init failed:", err);
+    throw new Error(
+      "Persistent storage is unavailable. Ensure you are using a supported browser (Chrome 108+, Firefox 111+, Safari 16.4+) and not in incognito mode.", { cause: err }
+    );
   }
-
-  db = new sqlite3.oo1.DB(":memory:");
-  return { persistent: false, needsInit: true };
 }
 
 function handleExec(payload: {
@@ -98,15 +85,12 @@ async function handleClear() {
   db?.close();
   db = null;
 
-  try {
-    const root = await navigator.storage.getDirectory();
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore entries() is async iterable in OPFS
-    for await (const [name] of root.entries()) {
-      await root.removeEntry(name, { recursive: true });
+  if (poolUtil) {
+    try {
+      await poolUtil.wipeFiles();
+    } catch (e) {
+      throw new Error(`Failed to clear OPFS: ${String(e)}`, { cause: e });
     }
-  } catch (e) {
-    throw new Error(`Failed to clear OPFS: ${String(e)}`, { cause: e });
   }
 
   return { success: true };

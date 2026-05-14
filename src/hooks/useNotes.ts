@@ -16,6 +16,7 @@ export function useNotes() {
   const [activeNoteId, setActiveNoteId] = useState<number | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const dbReadyRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,6 +55,7 @@ export function useNotes() {
         await initDatabase();
         dbReadyRef.current = true;
         const allNotes = await getAllNotes();
+        console.log(allNotes);
         setNotes(allNotes);
         const allTags = await getAllTags();
         setTags(allTags);
@@ -108,6 +110,7 @@ export function useNotes() {
           setNotes((prev) =>
             prev.map((n) => (n.id === id ? updated : n))
           );
+          console.log(`Updated note ${id} with ${JSON.stringify(updates)}`);
           if (updates.tags) {
             await refreshTags();
           }
@@ -124,8 +127,10 @@ export function useNotes() {
       if (saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
       }
-      saveTimerRef.current = setTimeout(() => {
-        handleUpdateNote(id, updates);
+      setSaving(true);
+      saveTimerRef.current = setTimeout(async () => {
+        await handleUpdateNote(id, updates);
+        setSaving(false);
       }, 1000);
     },
     [handleUpdateNote]
@@ -187,6 +192,7 @@ export function useNotes() {
     setActiveNoteId,
     tags,
     loading,
+    saving,
     searchQuery,
     setSearchQuery,
     handleCreateNote,

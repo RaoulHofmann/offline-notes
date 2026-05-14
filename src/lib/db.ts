@@ -5,7 +5,7 @@ const _pending = new Map<
   number,
   { resolve: (v: any) => void; reject: (e: Error) => void }
 >();
-let _initPromise: Promise<{ opfsAvailable: boolean }> | null = null;
+let _initPromise: Promise<void> | null = null;
 
 function getWorker(): Worker {
   if (_worker) return _worker;
@@ -40,7 +40,7 @@ function send<T = any>(type: string, payload?: any): Promise<T> {
   });
 }
 
-async function ensureInitialized(): Promise<{ opfsAvailable: boolean }> {
+async function ensureInitialized(): Promise<void> {
   if (_initPromise) return _initPromise;
   _initPromise = send("init");
   return _initPromise;

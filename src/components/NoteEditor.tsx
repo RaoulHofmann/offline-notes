@@ -27,7 +27,8 @@ import {
   PanelLeftClose,
   PanelLeft,
   ArrowLeft,
-  BookOpen,
+  Loader2,
+  Check,
 } from "lucide-react";
 import { useState, useCallback, useRef } from "react";
 
@@ -53,10 +54,6 @@ function wordCount(html: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-function formatTimeForInput(date: Date): string {
-  return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
-}
-
 export function NoteEditor() {
   const {
     notes,
@@ -65,6 +62,7 @@ export function NoteEditor() {
     setActiveNoteId,
     tags,
     loading,
+    saving,
     searchQuery,
     setSearchQuery,
     handleCreateNote,
@@ -78,7 +76,7 @@ export function NoteEditor() {
   const [darkMode, setDarkMode] = useState(getInitialDarkMode);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [timestampDialogOpen, setTimestampDialogOpen] = useState(false);
-  const [timestampValue, setTimestampValue] = useState(formatTimeForInput(new Date()));
+  const [timestampValue, setTimestampValue] = useState('00:00:00');
   const [insertIntoTitle, setInsertIntoTitle] = useState(true);
   const [insertIntoContent, setInsertIntoContent] = useState(true);
   const editorInsertRef = useRef<((text: string) => void) | null>(null);
@@ -108,7 +106,7 @@ export function NoteEditor() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `lecturenote-export-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `note-export-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -123,7 +121,7 @@ export function NoteEditor() {
         const data = JSON.parse(text);
 
         if (!data.notes || !Array.isArray(data.notes)) {
-          alert("Invalid file format. Expected a LectureNote export file.");
+          alert("Invalid file format. Expected a Note export file.");
           return;
         }
 
@@ -151,7 +149,7 @@ export function NoteEditor() {
   );
 
   const openTimestampDialog = () => {
-    setTimestampValue(formatTimeForInput(new Date()));
+    setTimestampValue('00:00:00');
     setInsertIntoTitle(true);
     setInsertIntoContent(true);
     setTimestampDialogOpen(true);
@@ -201,7 +199,6 @@ export function NoteEditor() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex">
-      {/* Sidebar */}
       {sidebarOpen && (
         <aside className="w-80 shrink-0 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
           <NoteList
@@ -216,9 +213,7 @@ export function NoteEditor() {
         </aside>
       )}
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
-        {/* Top Bar */}
         <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -243,12 +238,6 @@ export function NoteEditor() {
                 )}
               </Button>
               <Separator orientation="vertical" className="h-6" />
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-primary" />
-                <span className="text-sm font-semibold tracking-widest uppercase text-primary">
-                  LectureNote
-                </span>
-              </div>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -288,7 +277,6 @@ export function NoteEditor() {
 
         {activeNote ? (
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Note Header */}
             <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-6 py-4">
               <Input
                 value={activeNote.title}
@@ -305,6 +293,17 @@ export function NoteEditor() {
                   <FileText className="w-3 h-3 mr-1" />
                   {wordCount(activeNote.content)} words
                 </Badge>
+                {saving ? (
+                  <Badge variant="secondary" className="text-xs text-teal-600 dark:text-teal-400">
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    Saving...
+                  </Badge>
+                ) : (
+                  <Badge variant="secondary" className="text-xs text-zinc-400">
+                    <Check className="w-3 h-3 mr-1" />
+                    Saved
+                  </Badge>
+                )}
                 <Dialog
                   open={timestampDialogOpen}
                   onOpenChange={setTimestampDialogOpen}
@@ -324,19 +323,56 @@ export function NoteEditor() {
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
-                      <DialogTitle>Insert Lecture Timestamp</DialogTitle>
+                      <DialogTitle>Insert Video Timestamp</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-2">
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                          Time
+                          Timestamp
                         </label>
-                        <Input
-                          type="time"
-                          value={timestampValue}
-                          onChange={(e) => setTimestampValue(e.target.value)}
-                          className="w-32"
-                        />
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="99"
+                            value={timestampValue.split(":")[0]}
+                            onChange={(e) => {
+                              const parts = timestampValue.split(":");
+                              const h = Math.min(99, Math.max(0, parseInt(e.target.value) || 0)).toString().padStart(2, "0");
+                              setTimestampValue(`${h}:${parts[1]}:${parts[2]}`);
+                            }}
+                            className="w-16 text-center"
+                            placeholder="HH"
+                          />
+                          <span className="text-zinc-400">:</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="59"
+                            value={timestampValue.split(":")[1]}
+                            onChange={(e) => {
+                              const parts = timestampValue.split(":");
+                              const m = Math.min(59, Math.max(0, parseInt(e.target.value) || 0)).toString().padStart(2, "0");
+                              setTimestampValue(`${parts[0]}:${m}:${parts[2]}`);
+                            }}
+                            className="w-16 text-center"
+                            placeholder="MM"
+                          />
+                          <span className="text-zinc-400">:</span>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="59"
+                            value={timestampValue.split(":")[2]}
+                            onChange={(e) => {
+                              const parts = timestampValue.split(":");
+                              const s = Math.min(59, Math.max(0, parseInt(e.target.value) || 0)).toString().padStart(2, "0");
+                              setTimestampValue(`${parts[0]}:${parts[1]}:${s}`);
+                            }}
+                            className="w-16 text-center"
+                            placeholder="SS"
+                          />
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300">

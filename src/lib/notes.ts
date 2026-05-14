@@ -10,7 +10,8 @@ export interface Note {
 }
 
 export async function initDatabase(): Promise<void> {
-  const { needsInit } = await openDatabase();
+  const { persistent, needsInit } = await openDatabase();
+  console.log(`Database opened: persistent=${persistent}, needsInit=${needsInit}`);
 
   if (needsInit) {
     await execute(`
@@ -62,10 +63,11 @@ export async function createNote(
   content?: string
 ): Promise<Note> {
   const now = Date.now();
-  await execute(
+  const t = await execute(
     "INSERT INTO notes (title, content, created, modified, tags) VALUES (?, ?, ?, ?, ?)",
     [title || "Untitled", content || "", now, now, "[]"]
   );
+  console.log(t)
   const idResult = await queryOne("SELECT last_insert_rowid() as id");
   const id = idResult?.id as number;
   const note = await getNote(id);
@@ -84,10 +86,16 @@ export async function updateNote(
   const tags = updates.tags ?? existing.tags;
   const now = Date.now();
 
-  await execute(
+  console.log(`Updating note ${id} with ${JSON.stringify(updates)}`);
+  console.log(title, content, JSON.stringify(tags), now, id)
+
+  const t = await execute(
     "UPDATE notes SET title = ?, content = ?, tags = ?, modified = ? WHERE id = ?",
     [title, content, JSON.stringify(tags), now, id]
   );
+
+  console.log(t)
+  console.log(await getNote(id))
 
   return getNote(id);
 }

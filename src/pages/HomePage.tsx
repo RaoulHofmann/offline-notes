@@ -43,7 +43,7 @@ export function HomePage() {
             <div className="flex items-center gap-2">
               <BookOpen className="w-8 h-8 text-primary" />
               <span className="text-sm font-semibold tracking-widest uppercase text-primary">
-                LectureNote
+                O-Notes
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -61,11 +61,11 @@ export function HomePage() {
             </div>
           </div>
           <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-100 mb-3">
-            Your Lecture Notes
+            Your Offline Notes
           </h1>
           <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-2xl">
             Offline-first note-taking for lectures. Write, organize, and access
-            your notes anywhere — no internet required.
+            your notes anywhere with no internet required.
           </p>
         </div>
       </header>
@@ -218,12 +218,9 @@ export function HomePage() {
       <footer className="border-t border-zinc-200 dark:border-zinc-800 mt-12">
         <div className="max-w-screen-2xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              LectureNote
-            </p>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              Offline-first note-taking for students
-            </p>
+            {/*<p className="text-sm text-zinc-500 dark:text-zinc-400">*/}
+            {/*  O-Notes*/}
+            {/*</p>*/}
           </div>
         </div>
       </footer>
