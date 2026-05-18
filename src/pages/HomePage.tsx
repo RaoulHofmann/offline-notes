@@ -214,7 +214,6 @@ export function HomePage() {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-zinc-200 dark:border-zinc-800 mt-12">
         <div className="max-w-screen-2xl mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
