@@ -46,10 +46,10 @@ async function handleOpen() {
     db = new poolUtil.OpfsSAHPoolDb(dbFileName);
     return { persistent: true, needsInit: true };
   } catch (err) {
-    console.error("OPFS SAHPool VFS init failed:", err);
-    throw new Error(
-      "Persistent storage is unavailable. Ensure you are using a supported browser (Chrome 108+, Firefox 111+, Safari 16.4+) and not in incognito mode.", { cause: err }
-    );
+    console.warn("OPFS unavailable, falling back to in-memory database:", err);
+
+    db = new sqlite3.oo1.DB();
+    return { persistent: false, needsInit: true };
   }
 }
 
