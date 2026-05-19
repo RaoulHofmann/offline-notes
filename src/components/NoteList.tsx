@@ -1,4 +1,3 @@
-import {useState} from "react";
 import type {Note} from "@/lib/notes";
 import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
@@ -21,6 +20,7 @@ interface NoteListProps {
   onSelectNote: (id: number) => void;
   onCreateNote: () => void;
   onDeleteNote: (id: number) => void;
+  onClose?: () => void;
 }
 
 function formatDate(timestamp: number): string {
@@ -45,15 +45,15 @@ function stripHtml(html: string): string {
 }
 
 export function NoteList({
-                           notes,
-                           activeNoteId,
-                           searchQuery,
-                           onSearchChange,
-                           onSelectNote,
-                           onCreateNote,
-                           onDeleteNote,
-                         }: NoteListProps) {
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
+                            notes,
+                            activeNoteId,
+                            searchQuery,
+                            onSearchChange,
+                            onSelectNote,
+                            onCreateNote,
+                            onDeleteNote,
+                            onClose,
+                          }: NoteListProps) {
 
   return (
       <div className="flex flex-col h-full">
@@ -62,10 +62,17 @@ export function NoteList({
             <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
               O-Notes
             </h2>
-            <Button size="sm" onClick={onCreateNote}>
-              <Plus className="w-4 h-4 mr-1"/>
-              New
-            </Button>
+            <div className="flex items-center gap-1">
+              {onClose && (
+                <Button size="sm" variant="ghost" className="md:hidden h-7 w-7 p-0 -mr-1" onClick={onClose}>
+                  <X className="w-4 h-4"/>
+                </Button>
+              )}
+              <Button size="sm" onClick={onCreateNote}>
+                <Plus className="w-4 h-4 mr-1"/>
+                New
+              </Button>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400"/>
@@ -100,8 +107,6 @@ export function NoteList({
                     <div
                         key={note.id}
                         onClick={() => onSelectNote(note.id)}
-                        onMouseEnter={() => setHoveredId(note.id)}
-                        onMouseLeave={() => setHoveredId(null)}
                         className={cn(
                             "w-full text-left rounded-xl p-3 transition-all relative group cursor-pointer",
                             activeNoteId === note.id
@@ -118,19 +123,17 @@ export function NoteList({
                             {stripHtml(note.content).slice(0, 100) || "Empty note"}
                           </p>
                         </div>
-                        {hoveredId === note.id && (
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 shrink-0 text-zinc-400 hover:text-rose-500"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeleteNote(note.id);
-                                }}
-                            >
-                              <Trash2 className="w-3 h-3"/>
-                            </Button>
-                        )}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0 text-zinc-400 hover:text-rose-500 md:opacity-0 md:group-hover:opacity-100"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteNote(note.id);
+                            }}
+                        >
+                          <Trash2 className="w-3 h-3"/>
+                        </Button>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <span className="text-xs text-zinc-400 dark:text-zinc-500">

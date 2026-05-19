@@ -179,15 +179,15 @@ export function NoteEditor() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex">
-        <div className="w-80 border-r border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex flex-col md:flex-row">
+        <div className="w-full md:w-80 border-r border-zinc-200 dark:border-zinc-800 p-4 space-y-3">
           <Skeleton className="h-8 w-full" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-20 w-full" />
           <Skeleton className="h-20 w-full" />
         </div>
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-4 md:p-8">
           <Skeleton className="h-10 w-64 mb-4" />
           <Skeleton className="h-6 w-full mb-2" />
           <Skeleton className="h-6 w-3/4 mb-2" />
@@ -200,23 +200,47 @@ export function NoteEditor() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 flex">
       {sidebarOpen && (
-        <aside className="w-80 shrink-0 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
-          <NoteList
-            notes={notes}
-            activeNoteId={activeNoteId}
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            onSelectNote={setActiveNoteId}
-            onCreateNote={handleCreateNote}
-            onDeleteNote={handleDeleteNote}
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-30 md:hidden"
+            onClick={() => setSidebarOpen(false)}
           />
-        </aside>
+          <aside className="fixed inset-y-0 left-0 z-40 w-80 md:relative md:z-auto md:shrink-0 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col">
+            <NoteList
+              notes={notes}
+              activeNoteId={activeNoteId}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              onSelectNote={(id) => {
+                setActiveNoteId(id);
+                if (window.innerWidth < 768) setSidebarOpen(false);
+              }}
+              onCreateNote={() => {
+                handleCreateNote();
+                if (window.innerWidth < 768) setSidebarOpen(false);
+              }}
+              onDeleteNote={handleDeleteNote}
+              onClose={() => setSidebarOpen(false)}
+            />
+          </aside>
+        </>
       )}
 
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-3 md:px-4 py-2 md:py-3">
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1 md:gap-3">
+              {!sidebarOpen && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="md:hidden h-8 w-8 p-0"
+                  onClick={() => setSidebarOpen(true)}
+                  title="Open sidebar"
+                >
+                  <PanelLeft className="w-4 h-4" />
+                </Button>
+              )}
               <Link
                 to="/"
                 className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-sm font-medium hover:bg-muted hover:text-foreground transition-all"
@@ -224,10 +248,11 @@ export function NoteEditor() {
               >
                 <ArrowLeft className="w-4 h-4" />
               </Link>
-              <Separator orientation="vertical" className="h-6" />
+              <Separator orientation="vertical" className="h-6 hidden md:block" />
               <Button
                 variant="ghost"
                 size="icon"
+                className="hidden md:inline-flex"
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
               >
@@ -237,9 +262,9 @@ export function NoteEditor() {
                   <PanelLeft className="w-4 h-4" />
                 )}
               </Button>
-              <Separator orientation="vertical" className="h-6" />
+              <Separator orientation="vertical" className="h-6 hidden md:block" />
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -250,21 +275,25 @@ export function NoteEditor() {
               <Button
                 variant="ghost"
                 size="sm"
+                className="h-8 md:h-9"
                 onClick={() => fileInputRef.current?.click()}
+                title="Import notes"
               >
-                <Upload className="w-4 h-4 mr-1" />
-                Import
+                <Upload className="w-4 h-4 md:mr-1" />
+                <span className="hidden md:inline">Import</span>
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
+                className="h-8 md:h-9"
                 onClick={exportNotes}
                 disabled={notes.length === 0}
+                title="Export notes"
               >
-                <Download className="w-4 h-4 mr-1" />
-                Export
+                <Download className="w-4 h-4 md:mr-1" />
+                <span className="hidden md:inline">Export</span>
               </Button>
-              <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleDarkMode} title={darkMode ? "Light mode" : "Dark mode"}>
                 {darkMode ? (
                   <Sun className="w-4 h-4" />
                 ) : (
@@ -277,7 +306,7 @@ export function NoteEditor() {
 
         {activeNote ? (
           <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-6 py-4">
+            <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 md:px-6 py-3 md:py-4">
               <Input
                 value={activeNote.title}
                 onChange={(e) => handleTitleChange(e.target.value)}

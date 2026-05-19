@@ -33,7 +33,7 @@ export function Editor({ content, onChange, onInsertTimestamp }: EditorProps) {
     editorProps: {
       attributes: {
         class:
-          "prose prose-zinc dark:prose-invert max-w-none min-h-[400px] focus:outline-none p-6",
+          "prose prose-zinc dark:prose-invert max-w-none min-h-[300px] md:min-h-[400px] focus:outline-none p-4 md:p-6",
       },
     },
   });
@@ -137,13 +137,13 @@ export function Editor({ content, onChange, onInsertTimestamp }: EditorProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-1 p-2 border-b border-zinc-200 dark:border-zinc-800 flex-wrap">
+      <div className="flex items-center gap-1 p-2 border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto flex-nowrap">
         {tools.map((tool, i) =>
           "divider" in tool ? (
             <Separator
               key={`d-${i}`}
               orientation="vertical"
-              className="h-6 mx-1"
+              className="h-6 mx-1 shrink-0"
             />
           ) : (
             <Toggle
@@ -153,7 +153,7 @@ export function Editor({ content, onChange, onInsertTimestamp }: EditorProps) {
               onPressedChange={tool.action}
               title={tool.shortcut ? `${tool.label} (${tool.shortcut})` : tool.label}
               className={cn(
-                "h-8 w-8 p-0",
+                "md:h-8 md:w-8 h-9 w-9 p-0 shrink-0",
                 "active" in tool &&
                   tool.active &&
                   "bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300"
