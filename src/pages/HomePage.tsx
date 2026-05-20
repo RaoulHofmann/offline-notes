@@ -54,9 +54,12 @@ export function HomePage() {
                   <Moon className="w-4 h-4" />
                 )}
               </Button>
-              <Link to="/notes" className={cn(buttonVariants({ variant: "default" }))}>
-                  Open Notes
-                  <ArrowRight className="w-4 h-4 ml-1" />
+              <Link
+                to="/notes"
+                className={cn(buttonVariants({ variant: "default" }))}
+              >
+                Open Notes
+                <ArrowRight className="w-4 h-4 ml-1" />
               </Link>
             </div>
           </div>
@@ -64,8 +67,8 @@ export function HomePage() {
             Your Offline Notes
           </h1>
           <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-2xl">
-            Offline-first note-taking for lectures. Write, organize, and access
-            your notes anywhere with no internet required.
+            Offline-first note-taking. Write, organize, and access your notes
+            anywhere with no internet required.
           </p>
         </div>
       </header>
@@ -83,9 +86,12 @@ export function HomePage() {
                 offline and persist across sessions.
               </p>
             </div>
-            <Link to="/notes" className={cn(buttonVariants({ variant: "default", size: "lg" }))}>
-                <FileText className="w-4 h-4 mr-2" />
-                Open Editor
+            <Link
+              to="/notes"
+              className={cn(buttonVariants({ variant: "default", size: "lg" }))}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Open Editor
             </Link>
           </div>
         </div>

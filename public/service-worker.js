@@ -1,17 +1,36 @@
 if (typeof window === "undefined") {
-  self.addEventListener("install", () => self.skipWaiting());
-  self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
+  const CACHE_NAME = "offline-notes-v1";
+
+  self.addEventListener("install", (e) => {
+    self.skipWaiting();
+    e.waitUntil(
+      caches
+        .open(CACHE_NAME)
+        .then((cache) => cache.addAll(["/", "/notes/", "/favicon.svg"]))
+        .catch(() => {}),
+    );
+  });
+
+  self.addEventListener("activate", (e) => {
+    e.waitUntil(self.clients.claim());
+    e.waitUntil(
+      caches.keys().then((keys) =>
+        Promise.all(
+          keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)),
+        ),
+      ),
+    );
+  });
 
   self.addEventListener("fetch", (e) => {
     e.respondWith(handleFetch(e.request));
   });
 
   async function handleFetch(request) {
-    if (request.cache === "only-if-cached" && request.mode !== "same-origin") {
-      return;
-    }
+    if (request.cache === "only-if-cached" && request.mode !== "same-origin") return;
 
-    if (request.mode === "no-cors") {
+    const isNoCors = request.mode === "no-cors";
+    if (isNoCors) {
       request = new Request(request.url, {
         cache: request.cache,
         credentials: "omit",
@@ -28,6 +47,25 @@ if (typeof window === "undefined") {
       });
     }
 
+    if (request.method !== "GET" || isNoCors) {
+      return fetchAndPatchHeaders(request);
+    }
+
+    const cached = await caches.match(request);
+    try {
+      const response = await fetchAndPatchHeaders(request);
+      if (response && response.ok) {
+        const cache = await caches.open(CACHE_NAME);
+        cache.put(request, response.clone());
+      }
+      return response;
+    } catch {
+      if (cached) return cached;
+      return new Response("Offline", { status: 503 });
+    }
+  }
+
+  async function fetchAndPatchHeaders(request) {
     const r = await fetch(request).catch((e) => console.error(e));
     if (!r || r.status === 0) return r;
 
