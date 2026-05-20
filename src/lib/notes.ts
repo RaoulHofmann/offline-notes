@@ -11,7 +11,9 @@ export interface Note {
 
 export async function initDatabase(): Promise<void> {
   const { persistent, needsInit } = await openDatabase();
-  console.log(`Database opened: persistent=${persistent}, needsInit=${needsInit}`);
+  console.log(
+    `Database opened: persistent=${persistent}, needsInit=${needsInit}`,
+  );
 
   if (needsInit) {
     await execute(`
@@ -47,9 +49,7 @@ function parseNote(row: Record<string, unknown>): Note {
 }
 
 export async function getAllNotes(): Promise<Note[]> {
-  const rows = await queryAll(
-    "SELECT * FROM notes ORDER BY modified DESC"
-  );
+  const rows = await queryAll("SELECT * FROM notes ORDER BY modified DESC");
   return rows.map(parseNote);
 }
 
@@ -60,14 +60,13 @@ export async function getNote(id: number): Promise<Note | undefined> {
 
 export async function createNote(
   title?: string,
-  content?: string
+  content?: string,
 ): Promise<Note> {
   const now = Date.now();
   const t = await execute(
     "INSERT INTO notes (title, content, created, modified, tags) VALUES (?, ?, ?, ?, ?)",
-    [title || "Untitled", content || "", now, now, "[]"]
+    [title || "Untitled", content || "", now, now, "[]"],
   );
-  console.log(t)
   const idResult = await queryOne("SELECT last_insert_rowid() as id");
   const id = idResult?.id as number;
   const note = await getNote(id);
@@ -76,7 +75,7 @@ export async function createNote(
 
 export async function updateNote(
   id: number,
-  updates: Partial<Pick<Note, "title" | "content" | "tags">>
+  updates: Partial<Pick<Note, "title" | "content" | "tags">>,
 ): Promise<Note | undefined> {
   const existing = await getNote(id);
   if (!existing) return undefined;
@@ -87,15 +86,11 @@ export async function updateNote(
   const now = Date.now();
 
   console.log(`Updating note ${id} with ${JSON.stringify(updates)}`);
-  console.log(title, content, JSON.stringify(tags), now, id)
 
   const t = await execute(
     "UPDATE notes SET title = ?, content = ?, tags = ?, modified = ? WHERE id = ?",
-    [title, content, JSON.stringify(tags), now, id]
+    [title, content, JSON.stringify(tags), now, id],
   );
-
-  console.log(t)
-  console.log(await getNote(id))
 
   return getNote(id);
 }
@@ -109,7 +104,7 @@ export async function searchNotes(query: string): Promise<Note[]> {
   const pattern = `%${query}%`;
   const rows = await queryAll(
     "SELECT * FROM notes WHERE title LIKE ? OR content LIKE ? ORDER BY modified DESC",
-    [pattern, pattern]
+    [pattern, pattern],
   );
   return rows.map(parseNote);
 }
@@ -117,7 +112,7 @@ export async function searchNotes(query: string): Promise<Note[]> {
 export async function getNotesByTag(tag: string): Promise<Note[]> {
   const rows = await queryAll(
     "SELECT * FROM notes WHERE tags LIKE ? ORDER BY modified DESC",
-    [`%${tag}%`]
+    [`%${tag}%`],
   );
   return rows.map(parseNote).filter((n) => n.tags.includes(tag));
 }
@@ -131,7 +126,13 @@ export async function importNote(note: {
 }): Promise<Note> {
   const result = await execute(
     "INSERT INTO notes (title, content, created, modified, tags) VALUES (?, ?, ?, ?, ?)",
-    [note.title, note.content, note.created, note.modified, JSON.stringify(note.tags)]
+    [
+      note.title,
+      note.content,
+      note.created,
+      note.modified,
+      JSON.stringify(note.tags),
+    ],
   );
   const id = result[0]?.insertId ?? result[0]?.last_insert_rowid;
   const created = await getNote(id);

@@ -55,7 +55,6 @@ export function useNotes() {
         await initDatabase();
         dbReadyRef.current = true;
         const allNotes = await getAllNotes();
-        console.log(allNotes);
         setNotes(allNotes);
         const allTags = await getAllTags();
         setTags(allTags);
@@ -99,17 +98,18 @@ export function useNotes() {
         console.error("Failed to delete note:", err);
       }
     },
-    [activeNoteId, notes, refreshNotes, refreshTags]
+    [activeNoteId, notes, refreshNotes, refreshTags],
   );
 
   const handleUpdateNote = useCallback(
-    async (id: number, updates: Partial<Pick<Note, "title" | "content" | "tags">>) => {
+    async (
+      id: number,
+      updates: Partial<Pick<Note, "title" | "content" | "tags">>,
+    ) => {
       try {
         const updated = await updateNote(id, updates);
         if (updated) {
-          setNotes((prev) =>
-            prev.map((n) => (n.id === id ? updated : n))
-          );
+          setNotes((prev) => prev.map((n) => (n.id === id ? updated : n)));
           console.log(`Updated note ${id} with ${JSON.stringify(updates)}`);
           if (updates.tags) {
             await refreshTags();
@@ -119,7 +119,7 @@ export function useNotes() {
         console.error("Failed to update note:", err);
       }
     },
-    [refreshTags]
+    [refreshTags],
   );
 
   const debouncedSave = useCallback(
@@ -133,7 +133,7 @@ export function useNotes() {
         setSaving(false);
       }, 1000);
     },
-    [handleUpdateNote]
+    [handleUpdateNote],
   );
 
   const handleContentChange = useCallback(
@@ -141,12 +141,12 @@ export function useNotes() {
       if (!activeNoteId) return;
       setNotes((prev) =>
         prev.map((n) =>
-          n.id === activeNoteId ? { ...n, content, modified: Date.now() } : n
-        )
+          n.id === activeNoteId ? { ...n, content, modified: Date.now() } : n,
+        ),
       );
       debouncedSave(activeNoteId, { content });
     },
-    [activeNoteId, debouncedSave]
+    [activeNoteId, debouncedSave],
   );
 
   const handleTitleChange = useCallback(
@@ -154,12 +154,12 @@ export function useNotes() {
       if (!activeNoteId) return;
       setNotes((prev) =>
         prev.map((n) =>
-          n.id === activeNoteId ? { ...n, title, modified: Date.now() } : n
-        )
+          n.id === activeNoteId ? { ...n, title, modified: Date.now() } : n,
+        ),
       );
       debouncedSave(activeNoteId, { title });
     },
-    [activeNoteId, debouncedSave]
+    [activeNoteId, debouncedSave],
   );
 
   const handleTagsChange = useCallback(
@@ -167,11 +167,19 @@ export function useNotes() {
       if (!activeNoteId) return;
       await handleUpdateNote(activeNoteId, { tags });
     },
-    [activeNoteId, handleUpdateNote]
+    [activeNoteId, handleUpdateNote],
   );
 
   const handleImportNotes = useCallback(
-    async (importedNotes: { title: string; content: string; tags: string[]; created: number; modified: number }[]) => {
+    async (
+      importedNotes: {
+        title: string;
+        content: string;
+        tags: string[];
+        created: number;
+        modified: number;
+      }[],
+    ) => {
       try {
         for (const note of importedNotes) {
           await importNote(note);
@@ -182,7 +190,7 @@ export function useNotes() {
         console.error("Failed to import notes:", err);
       }
     },
-    [refreshNotes, refreshTags]
+    [refreshNotes, refreshTags],
   );
 
   return {
