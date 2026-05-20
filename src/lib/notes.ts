@@ -63,7 +63,7 @@ export async function createNote(
   content?: string,
 ): Promise<Note> {
   const now = Date.now();
-  const t = await execute(
+  await execute(
     "INSERT INTO notes (title, content, created, modified, tags) VALUES (?, ?, ?, ?, ?)",
     [title || "Untitled", content || "", now, now, "[]"],
   );
@@ -87,7 +87,7 @@ export async function updateNote(
 
   console.log(`Updating note ${id} with ${JSON.stringify(updates)}`);
 
-  const t = await execute(
+  await execute(
     "UPDATE notes SET title = ?, content = ?, tags = ?, modified = ? WHERE id = ?",
     [title, content, JSON.stringify(tags), now, id],
   );
